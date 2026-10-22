@@ -1,82 +1,94 @@
-# LM Arena Leaderboard Tracker ⚡️
+# LM Arena · Model Provider Trends
 
-A data analysis and visualization project tracking the performance of top AI language models across major providers on the LM Arena leaderboard.
+**A Python data visualization project exploring how the highest recorded text-leaderboard scores changed across six AI providers.**
 
-[![Watch the video](https://img.youtube.com/vi/JiAtZQJAJlk/maxresdefault.jpg)](https://youtu.be/JiAtZQJAJlk)
+AI leaderboards offer a snapshot of a fast-moving field. I built this project to make that history easier to explore: organize monthly scores, compare providers on the same scale, and turn a table of results into a readable visual story.
 
-## Overview
+The included summary spans **November 2024 through September 2025** and covers Google, OpenAI, Anthropic, DeepSeek, xAI, and Mistral AI. The project focuses on data preparation and visualization with **Python, Pandas, and Matplotlib**. Earlier animation experiments are preserved in `archive/`.
 
-This project processes and visualizes historical LM Arena leaderboard data to track how the top models from major AI providers (Google, OpenAI, Anthropic, DeepSeek, xAI, and Mistral AI) have performed over time.
+![Small-multiple charts comparing six model providers on a shared Arena score scale](lmarena_data/provider_trends.png)
 
-## Visualizations
+## What the chart shows
 
-### Historical Performance Chart
+Each panel follows one provider, using the same date range and score scale. Each observation represents the **highest recorded Arena score among that provider's models** in the monthly summary, not an average of its models. A provider's leading model can change from month to month.
 
-![LM Arena Historical Chart](lmarena_data/lmarena_real_historical_chart.png)
+Separate panels make closely spaced series easier to read without hiding their relative levels. Endpoint labels show the last month's score; the CSV remains available for inspecting individual values.
 
-Static chart showing the evolution of top model scores by provider from November 2024 to September 2025.
+This is an exploration of published leaderboard results, not a new model benchmark or an evaluation of autonomous agents. It can help frame questions about the AI landscape, but it does not measure market share, revenue, or suitability for a particular application.
 
-### Racing Chart Animation
+## Run locally
 
-![LM Arena Racing Chart](lmarena_data/lmarena_racing_chart.gif)
-
-Animated visualization showing the competitive race between AI providers over time.
-
-## Getting Started
-
-### Prerequisites
-
-- Python 3.x with pandas and matplotlib
-- Node.js (for the web visualization)
-
-### Running the Data Processor
+Python 3.10 or newer is required. No Node.js or web server is needed.
 
 ```bash
-cd lmarena_data
-python process_lmarena_data.py
+python -m venv .venv
+source .venv/bin/activate  # Windows: .venv\Scripts\activate
+python -m pip install -r requirements.txt
+python lmarena_data/process_lmarena_data.py
 ```
 
-This script will:
-1. Process monthly LM Arena CSV files (format: `monthly_YYYY.MM.csv`)
-2. Extract the highest arena score for each provider per month
-3. Generate `lmarena_top_scores_by_provider.csv` with aggregated results
-4. Create a visualization chart saved as `lmarena_real_historical_chart.png`
+The default command reads the committed summary and writes two files to `lmarena_data/output/`:
 
-### Running the Web Visualization
+- `provider_scores.csv` — the validated, date-sorted summary.
+- `provider_trends.png` — the six-panel chart shown above.
+
+Paths are resolved relative to the script, so it also works when launched from another directory. To choose a destination:
 
 ```bash
-cd lmarena_web
-npm install
-npm run dev
+python lmarena_data/process_lmarena_data.py --output-dir /tmp/arena-charts
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to view the interactive visualization.
+## Data and reproducibility
 
-## Project Structure
+The original project attributed its data to the [LM Arena leaderboard](https://lmarena.ai/). Two CSV files are preserved:
 
+| File | Contents | Reproducibility |
+| --- | --- | --- |
+| `lmarena_top_scores_by_provider.csv` | 11 monthly observations for six providers | Enough to regenerate the visualization; not enough to audit every historical observation. |
+| `lmarena_latest.csv` | A model-level snapshot, including organizations, scores, vote counts, and confidence-interval text | Retained for reference. This is a historical file, not a live download despite its original name. |
+
+**The original monthly source snapshots and their exact retrieval dates were not committed.** The current chart therefore reproduces the archived summary, not the original collection process. The old processor carried forward a provider's previous score when it was absent from a snapshot; without those source files, it is not possible to identify which summary cells were affected. The archived values are preserved unchanged.
+
+### Rebuild from monthly snapshots
+
+If you have the source exports, place them in a directory with filenames such as `monthly_2025.01.csv`. Each file must contain `organization` and `arena_score` columns.
+
+```bash
+python lmarena_data/process_lmarena_data.py \
+  --snapshots-dir /path/to/monthly-exports \
+  --output-dir /tmp/arena-rebuilt
 ```
-groqoa/
-├── lmarena_data/                    # Data and processing files
-│   ├── process_lmarena_data.py      # Main data processing script
-│   ├── lmarena_latest.csv           # Latest leaderboard snapshot
-│   ├── lmarena_top_scores_by_provider.csv  # Aggregated top scores
-│   ├── lmarena_real_historical_chart.png   # Static visualization
-│   └── lmarena_racing_chart.gif     # Animated visualization
-└── lmarena_web/                     # Next.js visualization web app
-    ├── app/
-    ├── components/
-    └── public/
+
+The processor matches the six providers, treats `Mistral` and `Mistral AI` as aliases, and takes each provider's maximum numeric score. Missing providers and missing months remain gaps. Malformed inputs fail with an error instead of being silently skipped. Newly generated output never overwrites the archived input CSVs by default.
+
+## Reading the results responsibly
+
+- Arena scores summarize human preferences in pairwise comparisons. They are not percentages or universal measures of model quality.
+- The best-scoring model, available competitors, and voting population can change between snapshots. A change in score is not a controlled measurement of capability improvement.
+- The historical summary does not include per-observation uncertainty or vote counts. Small differences should not be treated as statistically meaningful wins.
+- Missing historical source files limit verification. The animation exports are legacy presentation artifacts and are not regenerated by the Python script.
+
+## Repository guide
+
+```text
+lmarena_data/
+  process_lmarena_data.py             # Validation, optional aggregation, plotting
+  lmarena_top_scores_by_provider.csv  # Preserved historical summary
+  lmarena_latest.csv                  # Preserved model-level snapshot
+  provider_trends.png                 # README preview
+  lmarena_real_historical_chart.png   # Original chart, retained for reference
+archive/
+  lmarena_racing_chart.gif            # Original animation export
+  Flourish Demo Video.mov            # Original Flourish demo
+requirements.txt
 ```
 
-## Tracked Providers
+Built by [Rahul Kumar](https://github.com/rahulbkumar).
 
-- **Google** - Gemini models
-- **OpenAI** - GPT models
-- **Anthropic** - Claude models
-- **DeepSeek** - DeepSeek models
-- **xAI** - Grok models
-- **Mistral AI** - Mistral models
+## Checks
 
-## Data Source
+```bash
+python -m unittest discover -s tests -v
+```
 
-Data is sourced from the [LM Arena Leaderboard](https://lmarena.ai/), which ranks language models based on human preference voting.
+The checks cover missing months and providers, provider aliases, invalid scores, duplicate dates, and absent snapshot files.
